@@ -1,0 +1,45 @@
+[package]
+name = "nlbn_new"
+version = "0.1.0"
+description = "NLBN - EasyEDA/LCSC to KiCad Converter"
+authors = ["linkyourbin"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "nlbn_new_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri core
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# nlbn core dependencies (from original project)
+reqwest = { version = "0.13.2", features = ["json"] }
+rayon = "1.10"
+regex = "1.12.3"
+thiserror = "2.0.18"
+anyhow = "1.0.101"
+log = "0.4.29"
+env_logger = "0.11.8"
+chrono = "0.4"
+
+# History record storage
+rusqlite = { version = "0.31", features = ["bundled"] }

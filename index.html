@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NLBN - Neat Library Bring Now</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="stylesheet" href="/src/app-styles.css" />
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <img src="/src/assets/nlbn.svg" class="logo nlbn" alt="NLBN Logo" />
+        <h1>NLBN - Neat Library Bring Now</h1>
+        <p class="subtitle">Fast EasyEDA/LCSC to KiCad Converter</p>
+      </header>
+
+      <!-- Main content -->
+      <div class="content">
+        <!-- Left side: Conversion form -->
+        <div>
+          <div class="card">
+            <h2 class="card-title">Single Component Conversion</h2>
+
+            <div class="form-row">
+              <label for="lcsc-id">LCSC ID(s):</label>
+              <input
+                id="lcsc-id"
+                type="text"
+                placeholder="e.g., C2040 or C2040, C529356, C47773..."
+              />
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <div class="input-hint" style="margin: 0;">
+                  💡 Tip: You can enter multiple IDs separated by commas, spaces, or newlines
+                </div>
+                <button id="import-file-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                  📁 Import from File
+                </button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="output-dir">Output Directory:</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input id="output-dir" type="text" value="./output" readonly />
+                <button id="select-dir-btn" class="btn btn-secondary" style="padding: 0.75rem 1.5rem;">
+                  Browse
+                </button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label>Options:</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="opt-symbol" checked />
+                  <span>Symbol</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="opt-footprint" checked />
+                  <span>Footprint</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="opt-3d" checked />
+                  <span>3D Model</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="opt-overwrite" />
+                  <span>Overwrite</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button id="convert-btn" class="btn btn-primary">
+                Convert
+              </button>
+            </div>
+
+            <div id="result-message" style="margin-top: 1rem; display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Right side: History -->
+        <div>
+          <div class="card">
+            <div class="history-header">
+              <h2 class="card-title" style="margin-bottom: 0;">History</h2>
+              <button id="clear-history-btn" class="history-clear-btn">
+                Clear All
+              </button>
+            </div>
+
+            <div id="history-container">
+              <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <p>No conversion history yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
