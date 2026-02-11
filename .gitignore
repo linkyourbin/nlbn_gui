@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build tools (manually downloaded)
+nsis-3.11.zip
+nsis_tauri_utils.dll
+nsis-3.11-setup.exe
