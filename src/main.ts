@@ -342,7 +342,7 @@ function showBatchResult(batchResult: BatchResult) {
   if (failedResults.length > 0) {
     failedListHtml = `
       <div class="batch-failed-section">
-        <h4 style="color: var(--nlbn-error); font-size: 1rem; margin-bottom: 0.75rem;">
+        <h4 style="color: var(--nlbn-error); font-size: 0.95rem; margin-bottom: 0.5rem;">
           ⚠️ Failed Components (${failedResults.length}):
         </h4>
         <div class="batch-results-list">
@@ -365,8 +365,8 @@ function showBatchResult(batchResult: BatchResult) {
   } else {
     // All succeeded - show success message
     failedListHtml = `
-      <div style="text-align: center; padding: 1rem; color: var(--nlbn-success); font-size: 1.1rem;">
-        🎉 All components converted successfully! Check the History section for details.
+      <div style="text-align: center; padding: 0.5rem; color: var(--nlbn-success); font-size: 0.95rem;">
+        🎉 All components converted successfully!
       </div>
     `;
   }

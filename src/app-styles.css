@@ -15,7 +15,7 @@
   line-height: 1.6;
 
   color: var(--nlbn-text-dark);
-  background-color: var(--nlbn-orange-light);
+  background-color: #f0f0f0;
 }
 
 * {
@@ -28,12 +28,13 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #f5f5f5;
 }
 
 /* Main container */
 .container {
   width: 100%;
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0;
   display: flex;
@@ -44,21 +45,10 @@ body {
 /* Header */
 .header {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   background: linear-gradient(135deg, var(--nlbn-orange-primary), var(--nlbn-orange-secondary));
   color: var(--nlbn-text-light);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.logo.nlbn {
-  height: 80px;
-  margin-bottom: 1rem;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-  transition: transform 0.3s ease;
-}
-
-.logo.nlbn:hover {
-  transform: scale(1.05);
 }
 
 .header h1 {
@@ -76,17 +66,28 @@ body {
 /* Content area */
 .content {
   flex: 1;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Right side column - offset down and taller */
+.content > div:nth-child(2) {
+  margin-top: 5px;
+}
+
+.content > div:nth-child(2) .card {
+  padding-bottom: calc(1.25rem + 10px);
 }
 
 /* Card styles */
 .card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: box-shadow 0.3s ease;
 }
@@ -96,17 +97,17 @@ body {
 }
 
 .card-title {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--nlbn-orange-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   border-bottom: 2px solid var(--nlbn-orange-light);
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
 }
 
 /* Form elements */
 .form-row {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 
 .form-row label {
@@ -222,7 +223,7 @@ body {
 }
 
 .result-item {
-  padding: 1rem;
+  padding: 0.75rem;
   margin-bottom: 0.75rem;
   border-radius: 8px;
   border-left: 4px solid transparent;
@@ -371,25 +372,30 @@ body {
 }
 
 .batch-failed-section {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 .batch-result-header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .batch-result-header h3 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--nlbn-text-dark);
-  margin-bottom: 0.75rem;
+  margin: 0;
 }
 
 .batch-stats {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
@@ -412,11 +418,11 @@ body {
 
 .batch-progress-bar {
   width: 100%;
-  height: 32px;
+  height: 24px;
   background: #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
-  margin: 1rem 0;
+  margin: 0.5rem 0;
   position: relative;
 }
 
@@ -433,12 +439,12 @@ body {
 .batch-progress-text {
   color: white;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .batch-results-list {
-  max-height: 500px;
+  max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--nlbn-border);
   border-radius: 8px;
@@ -447,8 +453,8 @@ body {
 }
 
 .batch-result-item {
-  padding: 0.75rem;
-  margin: 0.5rem 0;
+  padding: 0.5rem;
+  margin: 0.4rem 0;
   border-radius: 6px;
   border-left: 3px solid transparent;
   background: white;
@@ -513,13 +519,14 @@ body {
 
 /* History container with fixed height and scroll */
 #history-container {
-  max-height: 500px;
+  max-height: 200px;
   overflow-y: auto;
   overflow-x: hidden;
   border: 1px solid var(--nlbn-border);
   border-radius: 8px;
   background: #fafafa;
   padding: 0.5rem;
+  min-height: 200px;
 }
 
 /* Custom scrollbar styling */
@@ -584,9 +591,9 @@ body {
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 2rem 1rem;
   color: #999;
-  min-height: 200px;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -594,8 +601,8 @@ body {
 }
 
 .empty-state-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Responsive design */

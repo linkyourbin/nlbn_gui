@@ -14,8 +14,10 @@
     "windows": [
       {
         "title": "NLBN - Neat Library Bring Now",
-        "width": 1200,
-        "height": 800
+        "width": 1130,
+        "height": 530,
+        "minWidth": 800,
+        "minHeight": 500
       }
     ],
     "security": {
