@@ -1,6 +1,6 @@
 [package]
 name = "nlbn_new"
-version = "1.1.0"
+version = "1.1.1"
 description = "NLBN - EasyEDA/LCSC to KiCad Converter"
 authors = ["linkyourbin"]
 edition = "2021"
