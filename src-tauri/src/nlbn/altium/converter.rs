@@ -13,6 +13,9 @@ impl AltiumConverter {
 
     /// Convert EasyEDA symbol to Altium symbol
     pub fn convert_symbol(&self, ee_symbol: &EeSymbol) -> AdSymbol {
+        log::info!("Converting EasyEDA symbol to Altium: {} pins, {} rectangles",
+            ee_symbol.pins.len(), ee_symbol.rectangles.len());
+
         let mut ad_symbol = AdSymbol {
             libref: ee_symbol.name.clone(),
             description: format!("{} - Converted from EasyEDA", ee_symbol.name),
@@ -26,15 +29,20 @@ impl AltiumConverter {
         for ee_pin in &ee_symbol.pins {
             ad_symbol.pins.push(self.convert_pin(ee_pin));
         }
+        log::info!("Converted {} pins to Altium format", ad_symbol.pins.len());
 
         // Convert rectangles (symbol body)
         for ee_rect in &ee_symbol.rectangles {
             ad_symbol.rectangles.push(self.convert_rectangle(ee_rect));
         }
+        log::info!("Converted {} rectangles to Altium format", ad_symbol.rectangles.len());
 
         // Add default rectangle if no body is defined
         if ad_symbol.rectangles.is_empty() {
-            ad_symbol.rectangles.push(self.create_default_body(&ad_symbol.pins));
+            let default_rect = self.create_default_body(&ad_symbol.pins);
+            log::info!("Created default body rectangle: x={}, y={}, w={}, h={}",
+                default_rect.x, default_rect.y, default_rect.width, default_rect.height);
+            ad_symbol.rectangles.push(default_rect);
         }
 
         ad_symbol
@@ -42,6 +50,8 @@ impl AltiumConverter {
 
     /// Convert EasyEDA footprint to Altium footprint
     pub fn convert_footprint(&self, ee_footprint: &EeFootprint, component_name: &str) -> AdFootprint {
+        log::info!("Converting EasyEDA footprint to Altium: {} pads", ee_footprint.pads.len());
+
         let mut ad_footprint = AdFootprint {
             name: ee_footprint.name.clone(),
             description: format!("{} - Converted from EasyEDA", ee_footprint.name),
@@ -54,8 +64,12 @@ impl AltiumConverter {
 
         // Convert pads
         for ee_pad in &ee_footprint.pads {
-            ad_footprint.pads.push(self.convert_pad(ee_pad));
+            let ad_pad = self.convert_pad(ee_pad);
+            log::debug!("Converted pad {}: x={:.2}, y={:.2}, w={:.2}, h={:.2}",
+                ad_pad.name, ad_pad.x, ad_pad.y, ad_pad.width, ad_pad.height);
+            ad_footprint.pads.push(ad_pad);
         }
+        log::info!("Converted {} pads to Altium format", ad_footprint.pads.len());
 
         // Add 3D model reference if needed
         ad_footprint.model_3d = Some(Ad3DModel {
@@ -256,8 +270,8 @@ mod tests {
     fn test_unit_conversion_pcb() {
         // EasyEDA: mm -> Altium: mil
         // 1 mm = 39.3701 mil
-        let mm_to_mil = 39.3701;
-        assert_eq!((1.0 * mm_to_mil * 100.0).round() / 100.0, 39.37);  // 1 mm ≈ 39.37 mil
-        assert_eq!((25.4 * mm_to_mil * 10.0).round() / 10.0, 1000.0);  // 25.4 mm = 1 inch = 1000 mil
+        let mm_to_mil: f64 = 39.3701;
+        assert_eq!(((1.0_f64 * mm_to_mil * 100.0).round() / 100.0 * 100.0).round() / 100.0, 39.37);  // 1 mm ≈ 39.37 mil
+        assert_eq!(((25.4_f64 * mm_to_mil * 10.0).round() / 10.0), 1000.0);  // 25.4 mm = 1 inch = 1000 mil
     }
 }

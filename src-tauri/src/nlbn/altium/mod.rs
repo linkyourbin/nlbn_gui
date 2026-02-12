@@ -9,6 +9,9 @@ pub mod symbol_exporter;
 pub mod footprint_exporter;
 pub mod converter;
 
+#[cfg(test)]
+mod tests;
+
 // Re-export main types for convenience
 pub use symbol::*;
 pub use footprint::*;
