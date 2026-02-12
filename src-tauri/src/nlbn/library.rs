@@ -17,11 +17,6 @@ impl LibraryManager {
         }
     }
 
-    /// Get the output path
-    pub fn get_output_path(&self) -> &Path {
-        &self.output_path
-    }
-
     /// Create necessary output directories
     pub fn create_directories(&self) -> Result<()> {
         // Create main output directory

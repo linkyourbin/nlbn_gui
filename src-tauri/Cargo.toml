@@ -40,7 +40,6 @@ anyhow = "1.0.101"
 log = "0.4.29"
 env_logger = "0.11.8"
 chrono = "0.4"
-uuid = { version = "1.11", features = ["v4"] }  # For Altium 3D model IDs
 
 # History record storage
 rusqlite = { version = "0.31", features = ["bundled"] }

@@ -10,8 +10,6 @@ interface ConversionOptions {
   kicad_v5: boolean;
   project_relative: boolean;
   overwrite: boolean;
-  target_kicad: boolean;
-  target_altium: boolean;
 }
 
 interface ConversionResult {
@@ -60,8 +58,6 @@ let optSymbol: HTMLInputElement;
 let optFootprint: HTMLInputElement;
 let opt3D: HTMLInputElement;
 let optOverwrite: HTMLInputElement;
-let targetKicad: HTMLInputElement;
-let targetAltium: HTMLInputElement;
 
 // Progress listener cleanup
 let progressUnlisten: UnlistenFn | null = null;
@@ -76,8 +72,6 @@ function getConversionOptions(): ConversionOptions {
     kicad_v5: false,
     project_relative: false,
     overwrite: optOverwrite.checked,
-    target_kicad: targetKicad.checked,
-    target_altium: targetAltium.checked,
   };
 }
 
@@ -484,8 +478,6 @@ window.addEventListener("DOMContentLoaded", () => {
   optFootprint = document.querySelector("#opt-footprint")!;
   opt3D = document.querySelector("#opt-3d")!;
   optOverwrite = document.querySelector("#opt-overwrite")!;
-  targetKicad = document.querySelector("#target-kicad")!;
-  targetAltium = document.querySelector("#target-altium")!;
 
   // Event listeners
   convertBtn.addEventListener("click", convertComponent);

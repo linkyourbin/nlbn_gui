@@ -26,8 +26,6 @@ pub async fn convert_component(
         options.convert_footprint,
         options.convert_3d,
         options.overwrite,
-        options.target_kicad,
-        options.target_altium,
     ).await;
 
     match result {

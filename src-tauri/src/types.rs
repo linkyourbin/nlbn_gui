@@ -10,9 +10,6 @@ pub struct ConversionOptions {
     pub kicad_v5: bool,
     pub project_relative: bool,
     pub overwrite: bool,
-    // Target format selection
-    pub target_kicad: bool,
-    pub target_altium: bool,
 }
 
 impl Default for ConversionOptions {
@@ -25,8 +22,6 @@ impl Default for ConversionOptions {
             kicad_v5: false,
             project_relative: false,
             overwrite: false,
-            target_kicad: true,
-            target_altium: false,
         }
     }
 }

@@ -8,11 +8,6 @@ use crate::nlbn::kicad::{
     },
     SymbolExporter, FootprintExporter, ModelExporter,
 };
-use crate::nlbn::altium::{
-    AltiumConverter,
-    SymbolExporter as AltiumSymbolExporter,
-    FootprintExporter as AltiumFootprintExporter,
-};
 use crate::nlbn::{LibraryManager, KicadVersion, Converter};
 use crate::nlbn::error::Result;
 
@@ -38,7 +33,7 @@ impl ComponentConverter {
         }
     }
 
-    /// Convert a component from LCSC/EasyEDA to target formats (KiCad and/or Altium)
+    /// Convert a component from LCSC/EasyEDA to KiCad
     pub async fn convert(
         &self,
         lcsc_id: &str,
@@ -46,8 +41,6 @@ impl ComponentConverter {
         convert_footprint: bool,
         convert_3d: bool,
         overwrite: bool,
-        target_kicad: bool,
-        target_altium: bool,
     ) -> Result<ConversionResult> {
         log::info!("Starting conversion for {}", lcsc_id);
 
@@ -62,55 +55,29 @@ impl ComponentConverter {
         let mut skipped_items = Vec::new();
         let component_name = sanitize_component_name(&component_data.title);
 
-        // Convert symbol for KiCad
-        if target_kicad && convert_symbol && !component_data.data_str.is_empty() {
-            log::info!("Converting symbol to KiCad...");
+        // Convert symbol
+        if convert_symbol && !component_data.data_str.is_empty() {
+            log::info!("Converting symbol...");
             let (symbol_file, written) = self.convert_symbol(&component_data, &component_name, overwrite)?;
             if written {
                 files_created.push(symbol_file.to_string_lossy().to_string());
             } else {
-                skipped_items.push("KiCad Symbol (already exists)");
+                skipped_items.push("Symbol (already exists)");
             }
         }
 
-        // Convert footprint for KiCad
-        if target_kicad && convert_footprint && !component_data.package_detail.is_empty() {
-            log::info!("Converting footprint to KiCad...");
+        // Convert footprint
+        if convert_footprint && !component_data.package_detail.is_empty() {
+            log::info!("Converting footprint...");
             let footprint_file = self.convert_footprint(&component_data, &component_name)?;
             files_created.push(footprint_file.to_string_lossy().to_string());
         }
 
-        // Convert symbol for Altium
-        if target_altium && convert_symbol && !component_data.data_str.is_empty() {
-            log::info!("Converting symbol to Altium...");
-            match self.convert_symbol_altium(&component_data, &component_name) {
-                Ok(symbol_file) => {
-                    files_created.push(symbol_file.to_string_lossy().to_string());
-                }
-                Err(e) => {
-                    log::warn!("Failed to convert Altium symbol: {}", e);
-                }
-            }
-        }
-
-        // Convert footprint for Altium
-        if target_altium && convert_footprint && !component_data.package_detail.is_empty() {
-            log::info!("Converting footprint to Altium...");
-            match self.convert_footprint_altium(&component_data, &component_name) {
-                Ok(footprint_file) => {
-                    files_created.push(footprint_file.to_string_lossy().to_string());
-                }
-                Err(e) => {
-                    log::warn!("Failed to convert Altium footprint: {}", e);
-                }
-            }
-        }
-
-        // Convert 3D model (shared between KiCad and Altium)
+        // Convert 3D model
         if convert_3d {
             if let Some(model_info) = &component_data.model_3d {
                 log::info!("Converting 3D model...");
-                match self.convert_3d_model(&model_info.uuid, &component_name, target_kicad, target_altium).await {
+                match self.convert_3d_model(&model_info.uuid, &component_name).await {
                     Ok(model_files) => {
                         for file in model_files {
                             files_created.push(file.to_string_lossy().to_string());
@@ -205,34 +172,28 @@ impl ComponentConverter {
         &self,
         uuid: &str,
         component_name: &str,
-        target_kicad: bool,
-        target_altium: bool,
     ) -> Result<Vec<std::path::PathBuf>> {
         let mut files = Vec::new();
 
-        // Download OBJ model (needed for KiCad VRML)
-        if target_kicad {
-            let obj_data = self.api.download_3d_obj(uuid).await?;
+        // Download OBJ model
+        let obj_data = self.api.download_3d_obj(uuid).await?;
 
-            // Convert OBJ to VRML
-            let model_exporter = ModelExporter::new();
-            let wrl_data = model_exporter.obj_to_wrl(&obj_data)?;
+        // Convert OBJ to VRML
+        let model_exporter = ModelExporter::new();
+        let wrl_data = model_exporter.obj_to_wrl(&obj_data)?;
 
-            // Write VRML model
-            let wrl_path = self.library_manager.write_wrl_model(component_name, &wrl_data)?;
-            files.push(wrl_path);
-        }
+        // Write VRML model
+        let wrl_path = self.library_manager.write_wrl_model(component_name, &wrl_data)?;
+        files.push(wrl_path);
 
-        // Download STEP model (shared by both KiCad and Altium)
-        if target_kicad || target_altium {
-            match self.api.download_3d_step(uuid).await {
-                Ok(step_data) => {
-                    let step_path = self.library_manager.write_step_model(component_name, &step_data)?;
-                    files.push(step_path);
-                }
-                Err(e) => {
-                    log::warn!("STEP model not available: {}", e);
-                }
+        // Try to download STEP model (may fail)
+        match self.api.download_3d_step(uuid).await {
+            Ok(step_data) => {
+                let step_path = self.library_manager.write_step_model(component_name, &step_data)?;
+                files.push(step_path);
+            }
+            Err(e) => {
+                log::warn!("STEP model not available: {}", e);
             }
         }
 
@@ -449,64 +410,6 @@ impl ComponentConverter {
             texts,
             model_3d,
         })
-    }
-
-    /// Convert EasyEDA symbol to Altium SchLib format
-    fn convert_symbol_altium(
-        &self,
-        component_data: &ComponentData,
-        component_name: &str,
-    ) -> Result<std::path::PathBuf> {
-        use crate::nlbn::easyeda::SymbolImporter;
-
-        // Parse EasyEDA symbol data
-        let ee_symbol = SymbolImporter::parse(&component_data.data_str)?;
-
-        // Convert to Altium symbol
-        let altium_converter = AltiumConverter::new();
-        let ad_symbol = altium_converter.convert_symbol(&ee_symbol);
-
-        // Export to Altium format
-        let exporter = AltiumSymbolExporter::new();
-        let output_dir = self.library_manager.get_output_path().join("altium");
-        std::fs::create_dir_all(&output_dir)
-            .map_err(|e| crate::nlbn::error::KicadError::Io(e))?;
-        let symbol_path = output_dir.join(format!("{}.SchLib", component_name));
-        exporter.export(&ad_symbol, &symbol_path)
-            .map_err(|e| crate::nlbn::error::KicadError::Io(e))?;
-
-        log::info!("Altium symbol written to: {}", symbol_path.display());
-
-        Ok(symbol_path)
-    }
-
-    /// Convert EasyEDA footprint to Altium PcbLib format
-    fn convert_footprint_altium(
-        &self,
-        component_data: &ComponentData,
-        component_name: &str,
-    ) -> Result<std::path::PathBuf> {
-        use crate::nlbn::easyeda::FootprintImporter;
-
-        // Parse EasyEDA footprint data
-        let ee_footprint = FootprintImporter::parse(&component_data.package_detail)?;
-
-        // Convert to Altium footprint
-        let altium_converter = AltiumConverter::new();
-        let ad_footprint = altium_converter.convert_footprint(&ee_footprint, component_name);
-
-        // Export to Altium format
-        let exporter = AltiumFootprintExporter::new();
-        let output_dir = self.library_manager.get_output_path().join("altium");
-        std::fs::create_dir_all(&output_dir)
-            .map_err(|e| crate::nlbn::error::KicadError::Io(e))?;
-        let footprint_path = output_dir.join(format!("{}.PcbLib", component_name));
-        exporter.export(&ad_footprint, &footprint_path)
-            .map_err(|e| crate::nlbn::error::KicadError::Io(e))?;
-
-        log::info!("Altium footprint written to: {}", footprint_path.display());
-
-        Ok(footprint_path)
     }
 }
 

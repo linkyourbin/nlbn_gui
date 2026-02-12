@@ -1,7 +1,6 @@
 // NLBN core module (migrated from CLI)
 pub mod easyeda;
 pub mod kicad;
-pub mod altium;  // Altium Designer format support
 pub mod converter;
 pub mod library;
 pub mod error;
@@ -10,7 +9,6 @@ pub mod error;
 pub use error::{AppError, Result};
 pub use easyeda::{EasyedaApi, SymbolImporter, FootprintImporter};
 pub use kicad::{SymbolExporter, FootprintExporter, ModelExporter};
-pub use altium::{AltiumConverter, SymbolExporter as AltiumSymbolExporter, FootprintExporter as AltiumFootprintExporter};
 pub use converter::Converter;
 pub use library::LibraryManager;
 
