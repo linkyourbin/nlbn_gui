@@ -1,9 +1,12 @@
-use tauri::{AppHandle, Manager, State, Emitter};
-use crate::state::AppState;
+use tauri::{AppHandle, Manager, Emitter};
 use crate::types::*;
 use crate::history::HistoryManager;
 use crate::converter_impl::ComponentConverter;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use tokio::sync::Semaphore;
+use tokio::task::JoinSet;
 
 /// Single component conversion
 #[tauri::command]
@@ -11,7 +14,6 @@ pub async fn convert_component(
     lcsc_id: String,
     options: ConversionOptions,
     app: AppHandle,
-    _state: State<'_, AppState>,
 ) -> std::result::Result<ConversionResult, String> {
     log::info!("Converting component: {}", lcsc_id);
 
@@ -76,59 +78,121 @@ pub async fn convert_component(
     }
 }
 
-/// Batch conversion (simplified)
+/// Batch conversion (parallel with semaphore-limited concurrency)
 #[tauri::command]
 pub async fn batch_convert(
     lcsc_ids: Vec<String>,
     options: ConversionOptions,
     app: AppHandle,
-    state: State<'_, AppState>,
 ) -> std::result::Result<BatchResult, String> {
-    log::info!("Batch converting {} components", lcsc_ids.len());
+    log::info!("Batch converting {} components (max 4 concurrent)", lcsc_ids.len());
 
     let total = lcsc_ids.len();
-    let mut results = Vec::new();
+    let semaphore = Arc::new(Semaphore::new(4));
+    let completed = Arc::new(AtomicUsize::new(0));
+    let mut join_set = JoinSet::new();
 
-    for (index, lcsc_id) in lcsc_ids.iter().enumerate() {
-        let current = index + 1;
+    for lcsc_id in lcsc_ids {
+        let sem = semaphore.clone();
+        let opts = options.clone();
+        let handle = app.clone();
+        let completed = completed.clone();
+        let total = total;
 
-        // Emit progress: starting conversion
-        let progress = ProgressUpdate {
-            current,
-            total,
-            lcsc_id: lcsc_id.clone(),
-            status: "converting".to_string(),
-        };
-        let _ = app.emit("conversion-progress", &progress);
+        join_set.spawn(async move {
+            let _permit = sem.acquire().await.expect("semaphore closed");
 
-        // Perform conversion
-        let result = match convert_component(
-            lcsc_id.clone(),
-            options.clone(),
-            app.clone(),
-            state.clone(),
-        ).await {
-            Ok(r) => r,
-            Err(e) => ConversionResult {
+            let current = completed.fetch_add(1, Ordering::Relaxed) + 1;
+
+            // Emit progress: starting conversion
+            let _ = handle.emit("conversion-progress", &ProgressUpdate {
+                current,
+                total,
                 lcsc_id: lcsc_id.clone(),
-                success: false,
-                message: e,
-                component_name: None,
-                files_created: Vec::new(),
-            },
-        };
+                status: "converting".to_string(),
+            });
 
-        // Emit progress: completed or failed
-        let status = if result.success { "completed" } else { "failed" };
-        let progress = ProgressUpdate {
-            current,
-            total,
-            lcsc_id: lcsc_id.clone(),
-            status: status.to_string(),
-        };
-        let _ = app.emit("conversion-progress", &progress);
+            // Perform conversion
+            let output_path = PathBuf::from(&opts.output_dir);
+            let converter = ComponentConverter::new(&output_path, opts.kicad_v5);
 
-        results.push(result);
+            let result = match converter.convert(
+                &lcsc_id,
+                opts.convert_symbol,
+                opts.convert_footprint,
+                opts.convert_3d,
+                opts.overwrite,
+            ).await {
+                Ok(conv_result) => {
+                    log::info!("Conversion successful: {}", conv_result.message);
+
+                    // Save to history
+                    if conv_result.success {
+                        if let Ok(app_dir) = handle.path().app_data_dir() {
+                            let _ = std::fs::create_dir_all(&app_dir);
+                            if let Ok(history) = HistoryManager::new(app_dir) {
+                                let _ = history.add_entry(&HistoryEntry {
+                                    id: 0,
+                                    lcsc_id: conv_result.lcsc_id.clone(),
+                                    component_name: conv_result.component_name.clone(),
+                                    success: conv_result.success,
+                                    timestamp: chrono::Local::now().to_rfc3339(),
+                                    output_dir: opts.output_dir.clone(),
+                                });
+                            }
+                        }
+                    }
+
+                    ConversionResult {
+                        lcsc_id: conv_result.lcsc_id,
+                        success: conv_result.success,
+                        message: conv_result.message,
+                        component_name: conv_result.component_name,
+                        files_created: conv_result.files_created,
+                    }
+                }
+                Err(e) => {
+                    let error_msg = format!("Conversion failed: {}", e);
+                    log::error!("{}", error_msg);
+                    ConversionResult {
+                        lcsc_id: lcsc_id.clone(),
+                        success: false,
+                        message: error_msg,
+                        component_name: None,
+                        files_created: Vec::new(),
+                    }
+                }
+            };
+
+            // Emit progress: completed or failed
+            let status = if result.success { "completed" } else { "failed" };
+            let _ = handle.emit("conversion-progress", &ProgressUpdate {
+                current,
+                total,
+                lcsc_id: result.lcsc_id.clone(),
+                status: status.to_string(),
+            });
+
+            result
+        });
+    }
+
+    // Collect all results
+    let mut results = Vec::with_capacity(total);
+    while let Some(join_result) = join_set.join_next().await {
+        match join_result {
+            Ok(result) => results.push(result),
+            Err(e) => {
+                log::error!("Task panicked: {}", e);
+                results.push(ConversionResult {
+                    lcsc_id: "unknown".to_string(),
+                    success: false,
+                    message: format!("Task panicked: {}", e),
+                    component_name: None,
+                    files_created: Vec::new(),
+                });
+            }
+        }
     }
 
     let succeeded = results.iter().filter(|r| r.success).count();

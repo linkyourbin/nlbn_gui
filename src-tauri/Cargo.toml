@@ -33,7 +33,6 @@ tokio = { version = "1", features = ["full"] }
 
 # nlbn core dependencies (from original project)
 reqwest = { version = "0.13.2", features = ["json"] }
-rayon = "1.10"
 regex = "1.12.3"
 thiserror = "2.0.18"
 anyhow = "1.0.101"
