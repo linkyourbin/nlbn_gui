@@ -588,6 +588,20 @@ body {
   color: #999;
 }
 
+.history-component-name {
+  color: #666;
+}
+
+.history-item-dir {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.25rem;
+}
+
+.progress-status-text {
+  color: #666;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;
@@ -626,10 +640,41 @@ body {
   }
 }
 
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--nlbn-border);
+  background: transparent;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.theme-toggle:hover {
+  border-color: var(--nlbn-orange-primary);
+  background: var(--nlbn-orange-light);
+}
+
 /* Dark mode */
-@media (prefers-color-scheme: dark) {
+html[data-theme="dark"] {
   :root {
+    --nlbn-text-dark: #e8e8e8;
+    --nlbn-border: #555;
+    --nlbn-orange-light: #3a2a1a;
+
     color: #f6f6f6;
+    background-color: #1a1a1a;
+  }
+
+  body {
     background-color: #1a1a1a;
   }
 
@@ -638,6 +683,24 @@ body {
     border: 1px solid #444;
   }
 
+  .card-title {
+    border-bottom-color: #444;
+  }
+
+  /* Form labels and text */
+  .form-row label {
+    color: #e0e0e0;
+  }
+
+  .input-hint {
+    color: #aaa;
+  }
+
+  .checkbox-label span {
+    color: #e0e0e0;
+  }
+
+  /* Form inputs */
   .form-row input,
   .form-row select,
   .form-row textarea {
@@ -646,6 +709,7 @@ body {
     border-color: #555;
   }
 
+  /* Result items */
   .result-item {
     background: #333;
   }
@@ -656,5 +720,126 @@ body {
 
   .result-item.error {
     background: #3a1e1e;
+  }
+
+  .result-item.loading {
+    background: #3a2a1a;
+  }
+
+  .result-item-header strong {
+    color: #e8e8e8;
+  }
+
+  .result-item-message {
+    color: #bbb;
+  }
+
+  .result-files-title {
+    color: #e0e0e0;
+  }
+
+  .result-files-list li {
+    color: #ccc;
+    background: rgba(255, 140, 66, 0.15);
+  }
+
+  .result-files {
+    border-top-color: #555;
+  }
+
+  /* Batch results */
+  .batch-result {
+    background: #2a2a2a;
+  }
+
+  .batch-result.success {
+    background: #1e3a28;
+  }
+
+  .batch-result.error {
+    background: #3a1e1e;
+  }
+
+  .batch-result-header h3 {
+    color: #e8e8e8;
+  }
+
+  .batch-stat-total {
+    color: #bbb;
+  }
+
+  .batch-progress-bar {
+    background: #444;
+  }
+
+  .batch-results-list {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+
+  .batch-result-item {
+    background: #333;
+  }
+
+  .batch-result-lcsc {
+    color: #e8e8e8;
+  }
+
+  .batch-result-message {
+    color: #bbb;
+  }
+
+  /* History */
+  #history-container {
+    background: #2a2a2a;
+    border-color: #555;
+  }
+
+  #history-container::-webkit-scrollbar-track {
+    background: #333;
+  }
+
+  .history-item {
+    background: #333;
+    border-bottom-color: #555;
+  }
+
+  .history-item strong {
+    color: #e8e8e8;
+  }
+
+  .history-item-time {
+    color: #aaa;
+  }
+
+  .history-component-name {
+    color: #aaa;
+  }
+
+  .history-item-dir {
+    color: #888;
+  }
+
+  .progress-status-text {
+    color: #aaa;
+  }
+
+  /* Empty state */
+  .empty-state {
+    color: #888;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: #444;
+  }
+
+  /* Buttons */
+  .btn-secondary {
+    background-color: #555;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #666;
   }
 }

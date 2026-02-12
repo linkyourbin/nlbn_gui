@@ -61,6 +61,7 @@ let optOverwrite: HTMLInputElement;
 
 // Progress listener cleanup
 let progressUnlisten: UnlistenFn | null = null;
+let progressMax = 0;
 
 // Get conversion options from UI
 function getConversionOptions(): ConversionOptions {
@@ -92,7 +93,8 @@ function extractLcscIds(input: string): string[] {
 }
 
 // Show batch progress UI with progress bar
-function showBatchProgressUI(total: number) {
+function showBatchProgressUI(_total: number) {
+  progressMax = 0;
   resultMessageDiv.style.display = "block";
   resultMessageDiv.className = "result-item loading";
   resultMessageDiv.innerHTML = `
@@ -101,10 +103,10 @@ function showBatchProgressUI(total: number) {
     </div>
     <div class="batch-progress-bar">
       <div class="batch-progress-fill" id="live-progress-fill" style="width: 0%">
-        <span class="batch-progress-text" id="live-progress-text">0 / ${total}</span>
+        <span class="batch-progress-text" id="live-progress-text">0%</span>
       </div>
     </div>
-    <div id="live-progress-status" style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+    <div id="live-progress-status" class="progress-status-text" style="font-size: 0.9rem; margin-top: 0.5rem;">
       Preparing...
     </div>
   `;
@@ -112,10 +114,12 @@ function showBatchProgressUI(total: number) {
 
 // Update batch progress in real-time
 function updateBatchProgress(progress: ProgressUpdate) {
-  const percentage = Math.round((progress.current / progress.total) * 100);
+  // Track highest progress to prevent regression from out-of-order parallel events
+  progressMax = Math.max(progressMax, progress.current);
+  const percentage = Math.round((progressMax / progress.total) * 100);
 
   // Update button text
-  convertBtn.textContent = `Converting ${progress.current}/${progress.total}...`;
+  convertBtn.textContent = `Converting... ${percentage}%`;
 
   // Update progress bar
   const progressFill = document.getElementById("live-progress-fill");
@@ -123,12 +127,12 @@ function updateBatchProgress(progress: ProgressUpdate) {
   const progressStatus = document.getElementById("live-progress-status");
 
   if (progressFill) progressFill.style.width = `${percentage}%`;
-  if (progressText) progressText.textContent = `${progress.current} / ${progress.total}`;
+  if (progressText) progressText.textContent = `${percentage}%`;
 
   if (progressStatus) {
     const statusIcon = progress.status === "completed" ? "✓" :
                       progress.status === "failed" ? "✗" : "⏳";
-    progressStatus.textContent = `${statusIcon} ${progress.status}: ${progress.lcsc_id}`;
+    progressStatus.textContent = `${statusIcon} ${progress.lcsc_id} — ${progress.status}`;
   }
 }
 
@@ -284,12 +288,12 @@ async function loadHistory() {
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <strong>${entry.lcsc_id}</strong>
-                ${entry.component_name ? `<span style="color: #666;"> - ${entry.component_name}</span>` : ""}
+                ${entry.component_name ? `<span class="history-component-name"> - ${entry.component_name}</span>` : ""}
               </div>
               <span class="result-item-status status-${statusClass}">${statusIcon}</span>
             </div>
             <div class="history-item-time">${timeStr}</div>
-            <div style="font-size: 0.85rem; color: #999; margin-top: 0.25rem;">
+            <div class="history-item-dir">
               ${entry.output_dir}
             </div>
           </div>
@@ -490,6 +494,23 @@ window.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Enter") {
       convertComponent();
     }
+  });
+
+  // Theme toggle
+  const themeToggleBtn = document.querySelector("#theme-toggle-btn") as HTMLButtonElement;
+  const savedTheme = localStorage.getItem("theme");
+  const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const initialTheme = savedTheme ?? (systemDark ? "dark" : "light");
+
+  document.documentElement.setAttribute("data-theme", initialTheme);
+  themeToggleBtn.textContent = initialTheme === "dark" ? "☀️" : "🌙";
+
+  themeToggleBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    themeToggleBtn.textContent = next === "dark" ? "☀️" : "🌙";
   });
 
   // Load history on startup
